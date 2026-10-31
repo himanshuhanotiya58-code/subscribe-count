@@ -4,28 +4,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Subscribe Count | Analytics</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
 body{background:#090d18;color:#f5f6fa}
+button{background:#ff4141;border:0;color:white;padding:13px 20px;border-radius:9px;cursor:pointer;font-weight:bold}
+button:hover{background:#dc3030}
+button:disabled{opacity:.6;cursor:wait}
+input{width:100%;background:#171f30;border:1px solid #303c52;padding:14px;border-radius:9px;color:white;outline:none;margin:8px 0}
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-box{background:#141d2c;border:1px solid #29364b;border-radius:16px;padding:30px;width:100%;max-width:400px}
+.auth-box h1{color:#ff4141;margin-bottom:12px}
+.auth-box p{color:#aab4c7;font-size:14px;margin-bottom:16px}
+.auth-box button{width:100%;margin-top:12px}
+.auth-switch{text-align:center;margin-top:18px;color:#aab4c7;font-size:13px}
+.auth-switch a{color:#ff6464;cursor:pointer}
+#authMessage{color:#ffd27a;font-size:13px;margin-top:12px;min-height:18px}
 .layout{display:flex;min-height:100vh}
 .sidebar{width:225px;background:#111827;padding:25px 16px;border-right:1px solid #263044;flex-shrink:0}
-.logo{font-size:21px;font-weight:bold;color:#ff4141;margin-bottom:40px}
-.menu-title{color:#78849a;font-size:11px;margin:25px 10px 12px;letter-spacing:1px}
+.logo{font-size:20px;font-weight:bold;color:#ff4141;margin-bottom:40px}
+.menu-title{color:#78849a;font-size:11px;margin:25px 10px 12px}
 .menu{display:block;padding:13px;margin-bottom:7px;border-radius:9px;color:#aab4c7;text-decoration:none;font-size:14px}
 .menu.active,.menu:hover{background:#263247;color:white}
 .main{flex:1;padding:30px;min-width:0}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:30px}
 .topbar h2{font-size:23px}
+.top-actions{display:flex;align-items:center;gap:12px}
 .status{color:#35d69a;font-size:12px}
 .welcome{margin-bottom:22px}
 .welcome p{color:#8994a9;margin-top:8px;font-size:14px}
 .search{display:flex;gap:10px;max-width:620px;margin:20px 0}
-input{flex:1;min-width:0;background:#171f30;border:1px solid #303c52;padding:14px;border-radius:9px;color:white;outline:none}
-button{background:#ff4141;border:none;color:white;padding:13px 20px;border-radius:9px;cursor:pointer;font-weight:bold}
-button:hover{background:#dc3030}
-button:disabled{opacity:.6;cursor:wait}
+.search input{flex:1;min-width:0;margin:0}
 #message{color:#aab4c7;font-size:13px;margin:12px 0;min-height:18px}
 .channel{display:flex;align-items:center;gap:14px;background:#141d2c;border:1px solid #29364b;padding:17px;border-radius:13px;margin:20px 0}
 #thumbnail{width:52px;height:52px;border-radius:50%;display:none;object-fit:cover}
@@ -34,7 +46,6 @@ button:disabled{opacity:.6;cursor:wait}
 .stat{background:#141d2c;border:1px solid #29364b;padding:22px;border-radius:13px;min-width:0}
 .stat p{color:#929fb4;font-size:13px}
 .stat h3{font-size:clamp(19px,3vw,28px);margin-top:14px;overflow-wrap:anywhere}
-.growth{color:#35d69a}
 .panel{background:#141d2c;border:1px solid #29364b;border-radius:14px;padding:22px;margin-top:22px}
 .panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
 .panel-head p{color:#929fb4;font-size:13px;margin-top:7px}
@@ -43,28 +54,57 @@ button:disabled{opacity:.6;cursor:wait}
 .filters button.active{background:#ff4141}
 .chart-wrap{height:300px;position:relative}
 footer{text-align:center;color:#657188;padding:30px;font-size:12px}
+.hidden{display:none!important}
 @media(max-width:800px){
- .sidebar{width:65px;padding:20px 8px}
- .logo{font-size:0;text-align:center}
- .logo:first-letter{font-size:22px}
- .menu-title{display:none}
- .menu{text-align:center;font-size:0;padding:15px 3px}
- .menu::first-letter{font-size:19px}
- .main{padding:20px 13px}
+.sidebar{width:65px;padding:20px 8px}
+.logo{font-size:0;text-align:center}
+.logo:first-letter{font-size:22px}
+.menu-title{display:none}
+.menu{text-align:center;font-size:0;padding:15px 3px}
+.menu::first-letter{font-size:19px}
+.main{padding:20px 13px}
 }
 @media(max-width:520px){
- .stats{grid-template-columns:1fr}
- .topbar h2{font-size:19px}
- .search{flex-direction:column}
- .search button{width:100%}
- .chart-wrap{height:240px}
- .panel{padding:15px}
+.stats{grid-template-columns:1fr}
+.topbar h2{font-size:18px}
+.topbar{align-items:flex-start}
+.search{flex-direction:column}
+.search button{width:100%}
+.chart-wrap{height:240px}
+.panel{padding:15px}
+.top-actions{flex-direction:column;align-items:flex-end}
 }
 </style>
 </head>
 
 <body>
-<div class="layout">
+
+<!-- LOGIN / SIGNUP -->
+<section id="authScreen" class="auth-wrap">
+  <div class="auth-box">
+    <h1>🔴 Subscribe Count</h1>
+    <p id="authTitle">Login to your account</p>
+
+    <div id="nameField" class="hidden">
+      <input id="fullName" type="text" placeholder="Your name">
+    </div>
+
+    <input id="email" type="email" placeholder="Email address" autocomplete="email">
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+
+    <button id="authButton" onclick="handleAuth()">Login</button>
+
+    <p id="authMessage"></p>
+
+    <div class="auth-switch">
+      <span id="switchText">Don't have an account?</span>
+      <a id="switchLink" onclick="toggleAuth()">Sign up</a>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<div id="appScreen" class="layout hidden">
 
 <aside class="sidebar">
   <div class="logo">🔴 SUBSCRIBE COUNT</div>
@@ -80,7 +120,10 @@ footer{text-align:center;color:#657188;padding:30px;font-size:12px}
 
 <div class="topbar">
   <h2>Analytics Dashboard</h2>
-  <span class="status">● Online Dashboard</span>
+  <div class="top-actions">
+    <span class="status">● Online Dashboard</span>
+    <button onclick="logout()">Logout</button>
+  </div>
 </div>
 
 <div class="welcome">
@@ -144,13 +187,158 @@ footer{text-align:center;color:#657188;padding:30px;font-size:12px}
 </div>
 
 <script>
+// IMPORTANT: Replace these two placeholders with your own Supabase details.
+const SUPABASE_URL = "https://hcizrqfwusszyefjkyif.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_zGpUK9h3Gem64jkR4MnU_w_lxsXZtLb";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+let isSignup = false;
 let currentChannelId = null;
 let allHistory = [];
 let selectedDays = 7;
 let chart = null;
 
-const numberFormat = value =>
-  Number(value).toLocaleString("en-IN");
+const numberFormat = value => Number(value).toLocaleString("en-IN");
+
+function toggleAuth() {
+  isSignup = !isSignup;
+
+  document.getElementById("authTitle").textContent =
+    isSignup ? "Create your account" : "Login to your account";
+
+  document.getElementById("authButton").textContent =
+    isSignup ? "Create Account" : "Login";
+
+  document.getElementById("nameField").classList.toggle("hidden", !isSignup);
+
+  document.getElementById("switchText").textContent =
+    isSignup ? "Already have an account?" : "Don't have an account?";
+
+  document.getElementById("switchLink").textContent =
+    isSignup ? "Login" : "Sign up";
+
+  document.getElementById("authMessage").textContent = "";
+}
+
+async function handleAuth() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const fullName = document.getElementById("fullName").value.trim();
+  const message = document.getElementById("authMessage");
+  const button = document.getElementById("authButton");
+
+  if (!email || !password) {
+    message.textContent = "Enter your email and password.";
+    return;
+  }
+
+  if (password.length < 8) {
+    message.textContent = "Password must be at least 8 characters.";
+    return;
+  }
+
+  if (isSignup && !fullName) {
+    message.textContent = "Please enter your name.";
+    return;
+  }
+
+  button.disabled = true;
+  message.textContent = "Please wait...";
+
+  try {
+    if (isSignup) {
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.session) {
+        showDashboard();
+      } else {
+        message.textContent =
+          "Account created! Check your email to confirm, then login.";
+      }
+
+    } else {
+      const { error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      await showDashboard();
+    }
+
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function showDashboard() {
+  document.getElementById("authScreen").classList.add("hidden");
+  document.getElementById("appScreen").classList.remove("hidden");
+}
+
+async function logout() {
+  const { error } = await supabaseClient.auth.signOut();
+
+  if (error) {
+    alert("Logout failed. Please try again.");
+    return;
+  }
+
+  document.getElementById("appScreen").classList.add("hidden");
+  document.getElementById("authScreen").classList.remove("hidden");
+  document.getElementById("authMessage").textContent = "You have logged out.";
+  document.getElementById("password").value = "";
+}
+
+// Check whether a user is already logged in.
+async function checkSession() {
+  const { data, error } = await supabaseClient.auth.getSession();
+
+  if (error) {
+    document.getElementById("authMessage").textContent = error.message;
+    return;
+  }
+
+  if (data.session) {
+    await showDashboard();
+  }
+}
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT" || !session) {
+    document.getElementById("appScreen").classList.add("hidden");
+    document.getElementById("authScreen").classList.remove("hidden");
+  }
+});
+
+async function authorizedFetch(url) {
+  const { data, error } = await supabaseClient.auth.getSession();
+
+  if (error || !data.session) {
+    throw new Error("Please login again.");
+  }
+
+  return fetch(url, {
+    headers: {
+      Authorization: `Bearer ${data.session.access_token}`
+    }
+  });
+}
 
 async function getChannel() {
   const handle = document.getElementById("handle").value.trim();
@@ -166,19 +354,13 @@ async function getChannel() {
   message.textContent = "Loading channel data...";
 
   try {
-    const response = await fetch(
+    const response = await authorizedFetch(
       `/api/channel?handle=${encodeURIComponent(handle)}`
     );
 
     const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(
-        typeof data.error === "string"
-          ? data.error
-          : data.error?.message || "Unable to find channel"
-      );
-    }
+    if (!response.ok) throw new Error(data.error || "Unable to find channel");
 
     currentChannelId = data.channelId;
 
@@ -188,18 +370,12 @@ async function getChannel() {
     document.getElementById("channelStatus").textContent = "YouTube Channel";
 
     document.getElementById("subscribers").textContent =
-      data.subscribers === "Hidden"
-        ? "Hidden"
-        : numberFormat(data.subscribers);
+      data.subscribers === "Hidden" ? "Hidden" : numberFormat(data.subscribers);
 
-    document.getElementById("views").textContent =
-      numberFormat(data.views);
-
-    document.getElementById("videos").textContent =
-      numberFormat(data.videos);
+    document.getElementById("views").textContent = numberFormat(data.views);
+    document.getElementById("videos").textContent = numberFormat(data.videos);
 
     message.textContent = "Channel updated successfully!";
-
     await loadHistory();
 
   } catch (error) {
@@ -211,21 +387,17 @@ async function getChannel() {
 
 async function loadHistory() {
   const historyMessage = document.getElementById("historyMessage");
-
   if (!currentChannelId) return;
 
   historyMessage.textContent = "Loading history...";
 
   try {
-    const response = await fetch(
+    const response = await authorizedFetch(
       `/api/history?channelId=${encodeURIComponent(currentChannelId)}`
     );
 
     const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "History could not be loaded");
-    }
+    if (!response.ok) throw new Error(data.error || "History could not be loaded");
 
     allHistory = Array.isArray(data) ? data : [];
     renderChart();
@@ -257,24 +429,16 @@ function renderChart() {
     return;
   }
 
-  historyMessage.textContent =
-    `${filtered.length} saved record(s). History is shared through your online database.`;
+  historyMessage.textContent = `${filtered.length} saved record(s).`;
 
   const labels = filtered.map(item =>
     new Date(item.recorded_at).toLocaleDateString("en-IN", {
       day: "numeric",
       month: "short"
-    }) + " " +
-    new Date(item.recorded_at).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit"
     })
   );
 
-  const values = filtered.map(item =>
-    Number(item.subscriber_count)
-  );
-
+  const values = filtered.map(item => Number(item.subscriber_count));
   const ctx = document.getElementById("growthChart");
 
   if (chart) chart.destroy();
@@ -290,18 +454,14 @@ function renderChart() {
         backgroundColor: "rgba(255,65,65,0.12)",
         borderWidth: 3,
         fill: true,
-        tension: 0.35,
-        pointRadius: 4,
-        pointBackgroundColor: "#ff4141"
+        tension: 0.35
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          labels: { color: "#c4ccda" }
-        }
+        legend: { labels: { color: "#c4ccda" } }
       },
       scales: {
         x: {
@@ -322,11 +482,9 @@ function renderChart() {
 
 function changeRange(days, button) {
   selectedDays = days;
-
   document.querySelectorAll(".filters button").forEach(btn =>
     btn.classList.remove("active")
   );
-
   button.classList.add("active");
   renderChart();
 }
@@ -334,6 +492,8 @@ function changeRange(days, button) {
 document.getElementById("handle").addEventListener("keydown", event => {
   if (event.key === "Enter") getChannel();
 });
+
+checkSession();
 </script>
 </body>
 </html>
