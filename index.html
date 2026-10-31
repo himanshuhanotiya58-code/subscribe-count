@@ -185,6 +185,8 @@ footer {
 <footer>© 2026 Subscribe Count</footer>
 
 <script>
+let refreshTimer = null;
+
 async function getChannel() {
   const handle = document.getElementById("handle").value.trim();
   const message = document.getElementById("message");
@@ -204,13 +206,17 @@ async function getChannel() {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "Unable to find channel");
+      throw new Error(
+        typeof data.error === "string"
+          ? data.error
+          : data.error?.message || "Unable to find channel"
+      );
     }
 
     document.getElementById("thumbnail").src = data.thumbnail;
     document.getElementById("thumbnail").style.display = "block";
-
     document.getElementById("channelName").textContent = data.name;
+
     document.getElementById("subscribers").textContent =
       data.subscribers === "Hidden"
         ? "Hidden"
@@ -222,8 +228,36 @@ async function getChannel() {
     document.getElementById("videos").textContent =
       Number(data.videos).toLocaleString("en-IN");
 
-    message.textContent = "Channel connected successfully!";
+    const growth = document.getElementById("growth");
+    const storageKey = "subscriber_" + handle.toLowerCase();
+
+    if (data.subscribers === "Hidden") {
+      growth.textContent = "Unavailable";
+    } else {
+      const current = Number(data.subscribers);
+      const previous = localStorage.getItem(storageKey);
+
+      if (previous === null) {
+        growth.textContent = "First record saved";
+      } else {
+        const difference = current - Number(previous);
+
+        growth.textContent =
+          difference > 0
+            ? "+" + difference.toLocaleString("en-IN")
+            : difference.toLocaleString("en-IN");
+      }
+
+      localStorage.setItem(storageKey, current);
+    }
+
+    message.textContent = "Updated successfully!";
+
+    clearInterval(refreshTimer);
+    refreshTimer = setInterval(getChannel, 30000);
+
   } catch (error) {
+    clearInterval(refreshTimer);
     message.textContent = error.message;
   }
 }
