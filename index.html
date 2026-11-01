@@ -1,310 +1,693 @@
-<!DOCTYPE html>  <html lang="en">  
-<head>  
-<meta charset="UTF-8">  
-<meta name="viewport" content="width=device-width, initial-scale=1.0">  
-<title>Subscribe Count | Analytics</title>  
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <style>  
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}  
-body{background:#090d18;color:#f5f6fa}  
-.layout{display:flex;min-height:100vh}  
-.sidebar{width:225px;background:#111827;padding:25px 16px;border-right:1px solid #263044;flex-shrink:0}  
-.logo{font-size:21px;font-weight:bold;color:#ff4141;margin-bottom:40px}  
-.menu-title{color:#78849a;font-size:11px;margin:25px 10px 12px;letter-spacing:1px}  
-.menu{display:block;padding:13px;margin-bottom:7px;border-radius:9px;color:#aab4c7;text-decoration:none;font-size:14px}  
-.menu.active,.menu:hover{background:#263247;color:white}  
-.main{flex:1;padding:30px;min-width:0}  
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:30px}  
-.topbar h2{font-size:23px}  
-.status{color:#35d69a;font-size:12px}  
-.welcome{margin-bottom:22px}  
-.welcome p{color:#8994a9;margin-top:8px;font-size:14px}  
-.search{display:flex;gap:10px;max-width:620px;margin:20px 0}  
-input{flex:1;min-width:0;background:#171f30;border:1px solid #303c52;padding:14px;border-radius:9px;color:white;outline:none}  
-button{background:#ff4141;border:none;color:white;padding:13px 20px;border-radius:9px;cursor:pointer;font-weight:bold}  
-button:hover{background:#dc3030}  
-button:disabled{opacity:.6;cursor:wait}  
-#message{color:#aab4c7;font-size:13px;margin:12px 0;min-height:18px}  
-.channel{display:flex;align-items:center;gap:14px;background:#141d2c;border:1px solid #29364b;padding:17px;border-radius:13px;margin:20px 0}  
-#thumbnail{width:52px;height:52px;border-radius:50%;display:none;object-fit:cover}  
-.channel p{color:#8e9bb0;font-size:12px;margin-top:5px}  
-.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:22px 0}  
-.stat{background:#141d2c;border:1px solid #29364b;padding:22px;border-radius:13px;min-width:0}  
-.stat p{color:#929fb4;font-size:13px}  
-.stat h3{font-size:clamp(19px,3vw,28px);margin-top:14px;overflow-wrap:anywhere}  
-.growth{color:#35d69a}  
-.panel{background:#141d2c;border:1px solid #29364b;border-radius:14px;padding:22px;margin-top:22px}  
-.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}  
-.panel-head p{color:#929fb4;font-size:13px;margin-top:7px}  
-.filters{display:flex;gap:7px}  
-.filters button{padding:9px 13px;background:#263247;font-size:12px}  
-.filters button.active{background:#ff4141}  
-.chart-wrap{height:300px;position:relative}  
-footer{text-align:center;color:#657188;padding:30px;font-size:12px}  
-@media(max-width:800px){  
- .sidebar{width:65px;padding:20px 8px}  
- .logo{font-size:0;text-align:center}  
- .logo:first-letter{font-size:22px}  
- .menu-title{display:none}  
- .menu{text-align:center;font-size:0;padding:15px 3px}  
- .menu::first-letter{font-size:19px}  
- .main{padding:20px 13px}  
-}  
-@media(max-width:520px){  
- .stats{grid-template-columns:1fr}  
- .topbar h2{font-size:19px}  
- .search{flex-direction:column}  
- .search button{width:100%}  
- .chart-wrap{height:240px}  
- .panel{padding:15px}  
-}  
-</style>  </head>  <body>  
-<div class="layout">  <aside class="sidebar">  
-  <div class="logo">🔴 SUBSCRIBE COUNT</div>  
-  <div class="menu-title">MAIN MENU</div>  
-  <a class="menu active" href="#dashboard">📊 Dashboard</a>  
-  <a class="menu" href="#channel">📺 Channel</a>  
-  <a class="menu" href="#history">📈 History</a>  
-  <div class="menu-title">TOOLS</div>  
-  <a class="menu" href="#analytics">📉 Analytics</a>  
-</aside>  <main class="main" id="dashboard">  <div class="topbar">  
-  <h2>Analytics Dashboard</h2>  
-  <span class="status">● Online Dashboard</span>  
-</div>  <div class="welcome">  
-  <h1>Channel Overview</h1>  
-  <p>Track your YouTube channel performance in one place.</p>  
-</div>  <div class="search">  
-  <input id="handle" placeholder="Enter YouTube handle (@channel)">  
-  <button id="searchBtn" onclick="getChannel()">Search</button>  
-</div>  <p id="message">Enter a YouTube handle to get started.</p>  <div class="channel" id="channel">  
-  <img id="thumbnail" alt="Channel thumbnail">  
-  <div>  
-    <h3 id="channelName">Your Channel</h3>  
-    <p id="channelStatus">Channel information will appear here</p>  
-  </div>  
-</div>  <div class="stats">  
-  <div class="stat">  
-    <p>Total Subscribers</p>  
-    <h3 id="subscribers">---</h3>  
-  </div>  
-  <div class="stat">  
-    <p>Total Views</p>  
-    <h3 id="views">---</h3>  
-  </div>  
-  <div class="stat">  
-    <p>Total Videos</p>  
-    <h3 id="videos">---</h3>  
-  </div>  
-</div>  <div class="panel" id="history">  
-  <div class="panel-head">  
-    <div>  
-      <h3>Subscriber Growth</h3>  
-      <p>Saved subscriber history</p>  
-    </div>  
-    <div class="filters">  
-      <button class="active" onclick="changeRange(7,this)">7D</button>  
-      <button onclick="changeRange(30,this)">30D</button>  
-      <button onclick="changeRange(90,this)">90D</button>  
-      <button onclick="changeRange(0,this)">All</button>  
-    </div>  
-  </div>  
-  <div class="chart-wrap">  
-    <canvas id="growthChart"></canvas>  
-  </div>  
-  <p id="historyMessage" style="color:#929fb4;font-size:12px;margin-top:15px">  
-    Search a channel to load its history.  
-  </p>  
-</div>  <footer>© 2026 Subscribe Count | Analytics Dashboard</footer>  
-</main>  
-</div>  <script>  
-let currentChannelId = null;  
-let allHistory = [];  
-let selectedDays = 7;  
-let chart = null;  
-  
-const numberFormat = value =>  
-  Number(value).toLocaleString("en-IN");  
-  
-async function getChannel() {  
-  const handle = document.getElementById("handle").value.trim();  
-  const message = document.getElementById("message");  
-  const btn = document.getElementById("searchBtn");  
-  
-  if (!handle) {  
-    message.textContent = "Please enter a YouTube handle.";  
-    return;  
-  }  
-  
-  btn.disabled = true;  
-  message.textContent = "Loading channel data...";  
-  
-  try {  
-    const response = await fetch(  
-      `/api/channel?handle=${encodeURIComponent(handle)}`  
-    );  
-  
-    const data = await response.json();  
-  
-    if (!response.ok) {  
-      throw new Error(  
-        typeof data.error === "string"  
-          ? data.error  
-          : data.error?.message || "Unable to find channel"  
-      );  
-    }  
-  
-    currentChannelId = data.channelId;  
-  
-    document.getElementById("thumbnail").src = data.thumbnail;  
-    document.getElementById("thumbnail").style.display = "block";  
-    document.getElementById("channelName").textContent = data.name;  
-    document.getElementById("channelStatus").textContent = "YouTube Channel";  
-  
-    document.getElementById("subscribers").textContent =  
-      data.subscribers === "Hidden"  
-        ? "Hidden"  
-        : numberFormat(data.subscribers);  
-  
-    document.getElementById("views").textContent =  
-      numberFormat(data.views);  
-  
-    document.getElementById("videos").textContent =  
-      numberFormat(data.videos);  
-  
-    message.textContent = "Channel updated successfully!";  
-  
-    await loadHistory();  
-  
-  } catch (error) {  
-    message.textContent = error.message;  
-  } finally {  
-    btn.disabled = false;  
-  }  
-}  
-  
-async function loadHistory() {  
-  const historyMessage = document.getElementById("historyMessage");  
-  
-  if (!currentChannelId) return;  
-  
-  historyMessage.textContent = "Loading history...";  
-  
-  try {  
-    const response = await fetch(  
-      `/api/history?channelId=${encodeURIComponent(currentChannelId)}`  
-    );  
-  
-    const data = await response.json();  
-  
-    if (!response.ok) {  
-      throw new Error(data.error || "History could not be loaded");  
-    }  
-  
-    allHistory = Array.isArray(data) ? data : [];  
-    renderChart();  
-  
-  } catch (error) {  
-    historyMessage.textContent = error.message;  
-  }  
-}  
-  
-function renderChart() {  
-  const historyMessage = document.getElementById("historyMessage");  
-  
-  const cutoff = selectedDays  
-    ? Date.now() - selectedDays * 24 * 60 * 60 * 1000  
-    : 0;  
-  
-  const filtered = allHistory.filter(item =>  
-    new Date(item.recorded_at).getTime() >= cutoff  
-  );  
-  
-  if (!filtered.length) {  
-    if (chart) {  
-      chart.destroy();  
-      chart = null;  
-    }  
-  
-    historyMessage.textContent =  
-      "No saved history for this period yet. Records are saved at most once per hour.";  
-    return;  
-  }  
-  
-  historyMessage.textContent =  
-    `${filtered.length} saved record(s). History is shared through your online database.`;  
-  
-  const labels = filtered.map(item =>  
-    new Date(item.recorded_at).toLocaleDateString("en-IN", {  
-      day: "numeric",  
-      month: "short"  
-    }) + " " +  
-    new Date(item.recorded_at).toLocaleTimeString("en-IN", {  
-      hour: "2-digit",  
-      minute: "2-digit"  
-    })  
-  );  
-  
-  const values = filtered.map(item =>  
-    Number(item.subscriber_count)  
-  );  
-  
-  const ctx = document.getElementById("growthChart");  
-  
-  if (chart) chart.destroy();  
-  
-  chart = new Chart(ctx, {  
-    type: "line",  
-    data: {  
-      labels,  
-      datasets: [{  
-        label: "Subscribers",  
-        data: values,  
-        borderColor: "#ff4141",  
-        backgroundColor: "rgba(255,65,65,0.12)",  
-        borderWidth: 3,  
-        fill: true,  
-        tension: 0.35,  
-        pointRadius: 4,  
-        pointBackgroundColor: "#ff4141"  
-      }]  
-    },  
-    options: {  
-      responsive: true,  
-      maintainAspectRatio: false,  
-      plugins: {  
-        legend: {  
-          labels: { color: "#c4ccda" }  
-        }  
-      },  
-      scales: {  
-        x: {  
-          ticks: { color: "#929fb4", maxTicksLimit: 7 },  
-          grid: { color: "rgba(255,255,255,0.05)" }  
-        },  
-        y: {  
-          ticks: {  
-            color: "#929fb4",  
-            callback: value => Number(value).toLocaleString("en-IN")  
-          },  
-          grid: { color: "rgba(255,255,255,0.07)" }  
-        }  
-      }  
-    }  
-  });  
-}  
-  
-function changeRange(days, button) {  
-  selectedDays = days;  
-  
-  document.querySelectorAll(".filters button").forEach(btn =>  
-    btn.classList.remove("active")  
-  );  
-  
-  button.classList.add("active");  
-  renderChart();  
-}  
-  
-document.getElementById("handle").addEventListener("keydown", event => {  
-  if (event.key === "Enter") getChannel();  
-});  
-</script>  </body>  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subscribe Count | Social Tools</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#090812;color:#f5f3ff}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:245px;background:#100e1d;border-right:1px solid #29233d;padding:25px 15px;flex-shrink:0}
+.logo{font-size:20px;font-weight:800;color:#b78aff;margin-bottom:35px}
+.menu-title{font-size:10px;color:#77718e;letter-spacing:1.5px;margin:25px 10px 12px}
+.menu{display:block;text-decoration:none;color:#aaa4bd;padding:13px;margin-bottom:7px;border-radius:10px;font-size:14px}
+.menu:hover,.menu.active{background:linear-gradient(100deg,#7139c9,#45217d);color:white}
+.main{flex:1;padding:30px;min-width:0}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;gap:12px}
+.topbar h2{font-size:22px}
+.status{color:#55dfa8;font-size:12px}
+.welcome{margin-bottom:25px}
+.welcome h1{font-size:30px}
+.welcome p,.muted{color:#9992ad;font-size:13px;margin-top:9px}
+.section-title{font-size:18px;margin:30px 0 15px}
+.search{display:flex;gap:10px;max-width:650px;margin:20px 0}
+input{background:#171426;border:1px solid #39304e;padding:14px;border-radius:10px;color:white;outline:none;width:100%;min-width:0}
+input:focus{border-color:#a36bff}
+button{background:#8245db;color:white;border:0;padding:13px 20px;border-radius:9px;cursor:pointer;font-weight:bold}
+button:hover{background:#a16af3}
+button:disabled{opacity:.6}
+#message{font-size:13px;color:#bcb3d0;margin:12px 0;min-height:18px}
+.channel,.stat,.panel,.tool-card{background:#151225;border:1px solid #302744;border-radius:15px;padding:20px}
+.channel{display:flex;align-items:center;gap:15px;margin:20px 0}
+#thumbnail{width:55px;height:55px;border-radius:50%;display:none;object-fit:cover}
+.channel p{color:#9992ad;font-size:12px;margin-top:5px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:20px 0}
+.stat p{color:#aaa2bd;font-size:13px}
+.stat h3{font-size:27px;margin-top:14px;overflow-wrap:anywhere}
+.stat-icon{font-size:22px;margin-bottom:12px}
+.tools-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.tool-card{transition:.2s;min-width:0}
+.tool-card:hover{transform:translateY(-3px);border-color:#9660e8}
+.tool-icon{font-size:27px;margin-bottom:14px}
+.tool-card h3{font-size:15px;margin-bottom:9px}
+.tool-card p{font-size:12px;color:#9992ad;line-height:1.6}
+.tool-tag{display:inline-block;font-size:10px;color:#c9a8ff;background:#35204f;padding:6px 9px;border-radius:20px;margin-top:14px}
+.panel{margin-top:22px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.panel-head p{font-size:12px;color:#9992ad;margin-top:7px}
+.filters{display:flex;gap:7px}
+.filters button{padding:9px 12px;background:#29213a;font-size:11px}
+.filters button.active{background:#8245db}
+.chart-wrap{height:280px;position:relative}
+footer{text-align:center;color:#77718e;padding:30px;font-size:12px}
+@media(max-width:900px){
+.sidebar{width:200px}
+.tools-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+.layout{display:block}
+.sidebar{width:100%;padding:15px}
+.logo{margin:0 0 12px}
+.menu-title{display:none}
+.sidebar nav{display:flex;overflow-x:auto;gap:5px}
+.menu{white-space:nowrap;margin:0;padding:11px;font-size:12px}
+.main{padding:20px 13px}
+.stats{grid-template-columns:1fr}
+.tools-grid{grid-template-columns:1fr}
+.welcome h1{font-size:24px}
+.search{flex-direction:column}
+.search button{width:100%}
+.chart-wrap{height:230px}
+}
+</style>
+</head>
+
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+<div class="logo">✦ SUBSCRIBE COUNT</div>
+<nav>
+<div class="menu-title">MAIN MENU</div>
+<a class="menu active" href="#dashboard">▦ Dashboard</a>
+<a class="menu" href="#youtube">▶ YouTube Tools</a>
+<a class="menu" href="#analytics">◈ Analytics</a>
+
+<div class="menu-title">CREATOR TOOLS</div>
+<a class="menu" href="#instagram">◎ Instagram Tools</a>
+<a class="menu" href="#ai-tools">✧ AI Tools</a>
+<a class="menu" href="#thumbnail-maker">▧ Thumbnail Maker</a>
+<a class="menu" href="#link-bio">↗ Link in Bio</a>
+</nav>
+</aside>
+
+<main class="main" id="dashboard">
+
+<div class="topbar">
+<h2>Creator Dashboard</h2>
+<span class="status">● System Online</span>
+</div>
+
+<div class="welcome">
+<h1>Welcome to Subscribe Count ✨</h1>
+<p>Your all-in-one platform for social media growth.</p>
+</div>
+
+<h2 class="section-title" id="youtube">YouTube Subscriber Counter</h2>
+
+<div class="search">
+<input id="handle" placeholder="Enter YouTube handle (@channel)">
+<button id="searchBtn" onclick="getChannel()">Search Channel</button>
+</div>
+
+<p id="message">Enter a YouTube handle to get started.</p>
+
+<div class="channel">
+<img id="thumbnail" alt="Channel thumbnail">
+<div>
+<h3 id="channelName">Your Channel</h3>
+<p id="channelStatus">Channel information will appear here</p>
+</div>
+</div>
+
+<div class="stats">
+<div class="stat">
+<div class="stat-icon">👥</div>
+<p>Total Subscribers</p>
+<h3 id="subscribers">---</h3>
+</div>
+<div class="stat">
+<div class="stat-icon">👁️</div>
+<p>Total Views</p>
+<h3 id="views">---</h3>
+</div>
+<div class="stat">
+<div class="stat-icon">🎬</div>
+<p>Total Videos</p>
+<h3 id="videos">---</h3>
+</div>
+</div>
+
+<h2 class="section-title">Explore Creator Tools</h2>
+
+<div class="tools-grid">
+
+<div class="tool-card" id="analytics">
+<div class="tool-icon">📈</div>
+<h3>Channel Growth Analytics</h3>
+<p>Track subscribers and monitor channel growth over time.</p>
+<span class="tool-tag">Analytics</span>
+</div>
+
+<div class="tool-card" id="instagram">
+<div class="tool-icon">#️⃣</div>
+<h3>Hashtag Generator</h3>
+<p>Generate hashtag ideas for Instagram and YouTube content.</p>
+<span class="tool-tag">Coming Soon</span>
+</div>
+
+<div class="tool-card" id="ai-tools">
+<div class="tool-icon">✍️</div>
+<h3>AI Title & Description</h3>
+<p>Get creative title and description ideas for your videos.</p>
+<span class="tool-tag">Coming Soon</span>
+</div>
+
+<div class="tool-card" id="thumbnail">
+<div class="tool-icon">🎨</div>
+<h3>Thumbnail Maker</h3>
+<p>Create attractive thumbnail designs for your videos.</p>
+<span class="tool-tag">Coming Soon</span>
+</div>
+
+<div class="tool-card" id="link-bio">
+  <div class="tool-icon">🔗</div>
+  <h3>Link in Bio Maker</h3>
+  <p>Create your own social media link page.</p>
+
+  <input id="bioName" type="text" placeholder="Your Name">
+  <input id="bioInstagram" type="url" placeholder="Instagram URL">
+  <input id="bioYoutube" type="url" placeholder="YouTube URL">
+  <input id="bioWhatsapp" type="url" placeholder="WhatsApp URL">
+
+  <button onclick="generateBio()">Generate Link Page</button>
+  <div id="bioPreview"></div>
+</div>
+
+<script>
+function generateBio() {
+  const name = document.getElementById("bioName").value.trim();
+  const instagram = document.getElementById("bioInstagram").value.trim();
+  const youtube = document.getElementById("bioYoutube").value.trim();
+  const whatsapp = document.getElementById("bioWhatsapp").value.trim();
+
+  if (!name) {
+    alert("Please enter your name");
+    return;
+  }
+
+  const links = [
+    ["Instagram", instagram],
+    ["YouTube", youtube],
+    ["WhatsApp", whatsapp]
+  ].filter(item => item[1]);
+
+  const preview = document.getElementById("bioPreview");
+  preview.innerHTML = `<h3>${name.replace(/[&<>"']/g, "")}</h3>`;
+
+  links.forEach(([label, url]) => {
+    try {
+      const parsed = new URL(url);
+      if (!["https:", "http:"].includes(parsed.protocol)) return;
+      const link = document.createElement("a");
+      link.href = parsed.href;
+      link.textContent = label;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.style.display = "block";
+      preview.appendChild(link);
+    } catch {}
+  });
+
+  if (!preview.querySelector("a")) {
+    preview.textContent = "Please enter at least one valid social media URL.";
+  }
+}
+</script>
+
+<div class="tool-card">
+<div class="tool-icon">📊</div>
+<h3>Subscriber History</h3>
+<p>View previously saved subscriber count records.</p>
+<span class="tool-tag">Available</span>
+<div class="tool-card">
+  <div class="tool-icon">📈</div>
+  <h3>Growth Analytics</h3>
+  <p>Track daily, weekly and monthly subscriber growth.</p>
+  <span class="tool-tag">Coming Soon</span>
+</div>
+
+<div class="stats growth-summary">
+  <div class="stat">
+    <div class="stat-icon">📅</div>
+    <p>Daily Growth</p>
+    <h3 id="dailyGrowth">--</h3>
+  </div>
+
+  <div class="stat">
+    <div class="stat-icon">📊</div>
+    <p>Weekly Growth</p>
+    <h3 id="weeklyGrowth">--</h3>
+  </div>
+
+  <div class="stat">
+    <div class="stat-icon">🗓️</div>
+    <p>Monthly Growth</p>
+    <h3 id="monthlyGrowth">--</h3>
+  </div>
+<div class="panel" id="history">
+<div class="panel-head">
+<div>
+<h3>Subscriber Growth</h3>
+<p>Saved subscriber history</p>
+</div>
+<div class="filters">
+<button class="active" onclick="changeRange(7,this)">7D</button>
+<button onclick="changeRange(30,this)">30D</button>
+<button onclick="changeRange(90,this)">90D</button>
+<button onclick="changeRange(0,this)">All</button>
+</div>
+</div>
+<div class="chart-wrap">
+<canvas id="growthChart"></canvas>
+</div>
+<p id="historyMessage" class="muted">Search a channel to load its history.</p>
+</div>
+
+<footer>© 2026 Subscribe Count | Creator Tools Platform</footer>
+</main>
+</div>
+
+<script>
+let currentChannelId=null;
+let allHistory=[];
+let selectedDays=7;
+let chart=null;
+
+const numberFormat=value=>Number(value).toLocaleString("en-IN");
+
+async function getChannel(){
+const handle=document.getElementById("handle").value.trim();
+const message=document.getElementById("message");
+const btn=document.getElementById("searchBtn");
+
+if(!handle){
+message.textContent="Please enter a YouTube handle.";
+return;
+}
+
+btn.disabled=true;
+message.textContent="Loading channel data...";
+
+try{
+const response=await fetch(`/api/channel?handle=${encodeURIComponent(handle)}`);
+const data=await response.json();
+
+if(!response.ok){
+throw new Error(typeof data.error==="string"?data.error:data.error?.message||"Unable to find channel");
+}
+
+currentChannelId=data.channelId;
+
+document.getElementById("thumbnail").src=data.thumbnail;
+document.getElementById("thumbnail").style.display="block";
+document.getElementById("channelName").textContent=data.name;
+document.getElementById("channelStatus").textContent="YouTube Channel";
+
+document.getElementById("subscribers").textContent=
+data.subscribers==="Hidden"?"Hidden":numberFormat(data.subscribers);
+document.getElementById("views").textContent=numberFormat(data.views);
+document.getElementById("videos").textContent=numberFormat(data.videos);
+
+message.textContent="Channel updated successfully!";
+await loadHistory();
+
+}catch(error){
+message.textContent=error.message;
+}finally{
+btn.disabled=false;
+}
+}
+
+async function loadHistory(){
+const historyMessage=document.getElementById("historyMessage");
+if(!currentChannelId)return;
+
+historyMessage.textContent="Loading history...";
+
+try{
+const response=await fetch(`/api/history?channelId=${encodeURIComponent(currentChannelId)}`);
+const data=await response.json();
+
+if(!response.ok)throw new Error(data.error||"History could not be loaded");
+
+allHistory=Array.isArray(data)?data:[];
+renderChart();
+}catch(error){
+historyMessage.textContent=error.message;
+}
+}
+function updateGrowthSummary() {
+  const ranges = [
+    ["dailyGrowth", 1],
+    ["weeklyGrowth", 7],
+    ["monthlyGrowth", 30]
+  ];
+
+  const now = Date.now();
+
+  for (const [id, days] of ranges) {
+    const points = allHistory
+      .filter(item => {
+        const time = new Date(item.recorded_at).getTime();
+        return Number.isFinite(time) &&
+          time >= now - days * 86400000 &&
+          time <= now;
+      })
+      .sort((a, b) =>
+        new Date(a.recorded_at) - new Date(b.recorded_at)
+      );
+
+    const element = document.getElementById(id);
+
+    if (!element) continue;
+
+    if (points.length < 2) {
+      element.textContent = "--";
+      continue;
+    }
+
+    const growth =
+      Number(points[points.length - 1].subscriber_count) -
+      Number(points[0].subscriber_count);
+
+    element.textContent =
+      (growth > 0 ? "+" : "") + numberFormat(growth);
+  }
+}
+function renderChart(){
+const historyMessage=document.getElementById("historyMessage");
+const cutoff=selectedDays?Date.now()-selectedDays*86400000:0;
+const filtered=allHistory.filter(item=>new Date(item.recorded_at).getTime()>=cutoff);
+
+if(!filtered.length){
+if(chart){chart.destroy();chart=null;}
+historyMessage.textContent="No saved history for this period yet.";
+return;
+}
+
+historyMessage.textContent=`${filtered.length} saved record(s).`;
+
+const labels=filtered.map(item=>new Date(item.recorded_at).toLocaleDateString("en-IN",{day:"numeric",month:"short"}));
+const values=filtered.map(item=>Number(item.subscriber_count));
+
+if(chart)chart.destroy();
+
+chart=new Chart(document.getElementById("growthChart"),{
+type:"line",
+data:{
+labels,
+datasets:[{
+label:"Subscribers",
+data:values,
+borderColor:"#a875ff",
+backgroundColor:"rgba(142,85,235,0.15)",
+borderWidth:3,
+fill:true,
+tension:0.35,
+pointRadius:4,
+pointBackgroundColor:"#b78aff"
+}]
+},
+options:{
+responsive:true,
+maintainAspectRatio:false,
+plugins:{legend:{labels:{color:"#c4bbd8"}}},
+scales:{
+x:{ticks:{color:"#9992ad",maxTicksLimit:7},grid:{color:"rgba(255,255,255,.05)"}},
+y:{ticks:{color:"#9992ad",callback:value=>Number(value).toLocaleString("en-IN")},grid:{color:"rgba(255,255,255,.07)"}}
+}
+}
+});
+}
+
+function changeRange(days,button){
+selectedDays=days;
+document.querySelectorAll(".filters button").forEach(btn=>btn.classList.remove("active"));
+button.classList.add("active");
+renderChart();
+}
+
+document.getElementById("handle").addEventListener("keydown",event=>{
+if(event.key==="Enter")getChannel();
+});
+</script>
+<!-- SUBSCRIBE COUNT THUMBNAIL MAKER -->
+<section id="thumbnail-maker" class="tool-section">
+  <div class="thumbnail-header">
+    <h2>🎨 Thumbnail Maker</h2>
+    <p>Create professional YouTube thumbnails for free.</p>
+  </div>
+
+  <div class="thumbnail-editor">
+    <div class="thumbnail-controls">
+      <label>Upload Background Image</label>
+      <input type="file" id="thumbImage" accept="image/*">
+
+      <label>Thumbnail Heading</label>
+      <input type="text" id="thumbTitle" maxlength="80"
+        placeholder="Enter your title" value="YOUR VIDEO TITLE">
+
+      <label>Subtitle</label>
+      <input type="text" id="thumbSubtitle" maxlength="100"
+        placeholder="Enter subtitle" value="SUBSCRIBE FOR MORE">
+
+      <label>Text Color</label>
+      <input type="color" id="thumbColor" value="#ffffff">
+
+      <label>Background Color</label>
+      <input type="color" id="thumbBg" value="#6c35d4">
+
+      <label>Title Size</label>
+      <input type="range" id="thumbSize" min="30" max="110" value="65">
+
+      <label>Text Position</label>
+      <select id="thumbPosition">
+        <option value="center">Center</option>
+        <option value="left">Left</option>
+        <option value="right">Right</option>
+      </select>
+
+      <button type="button" id="downloadThumb">
+        Download Thumbnail PNG
+      </button>
+    </div>
+
+    <div class="thumbnail-preview">
+      <canvas id="thumbCanvas" width="1280" height="720"></canvas>
+      <p>Preview • 1280 × 720 px</p>
+    </div>
+  </div>
+</section>
+
+<style>
+#thumbnail-maker {
+  padding: 25px;
+  color: white;
+  background: #11101b;
+  border: 1px solid #35234f;
+  border-radius: 18px;
+  margin: 20px 0;
+}
+
+.thumbnail-header h2 {
+  color: #bd8aff;
+  margin-bottom: 8px;
+}
+
+.thumbnail-editor {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 25px;
+  margin-top: 25px;
+}
+
+.thumbnail-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.thumbnail-controls label {
+  font-size: 14px;
+  color: #d8c8f0;
+}
+
+.thumbnail-controls input,
+.thumbnail-controls select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #51406b;
+  background: #201a2d;
+  color: white;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.thumbnail-controls input[type="color"] {
+  height: 45px;
+}
+
+.thumbnail-controls button {
+  padding: 14px;
+  border: none;
+  border-radius: 9px;
+  background: linear-gradient(90deg, #813cf5, #b04cf5);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.thumbnail-preview {
+  min-width: 0;
+  text-align: center;
+}
+
+#thumbCanvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  background: #6c35d4;
+}
+
+.thumbnail-preview p {
+  color: #aaa;
+  font-size: 13px;
+}
+
+@media(max-width: 700px) {
+  .thumbnail-editor {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<script>
+(() => {
+  const canvas = document.getElementById("thumbCanvas");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const imageInput = document.getElementById("thumbImage");
+  let uploadedImage = null;
+
+  const title = document.getElementById("thumbTitle");
+  const subtitle = document.getElementById("thumbSubtitle");
+  const color = document.getElementById("thumbColor");
+  const bg = document.getElementById("thumbBg");
+  const size = document.getElementById("thumbSize");
+  const position = document.getElementById("thumbPosition");
+
+  function drawText(text, x, y, maxWidth, fontSize) {
+    ctx.font = `900 ${fontSize}px Arial`;
+    ctx.textAlign = position.value;
+    ctx.textBaseline = "middle";
+    ctx.lineWidth = 9;
+    ctx.strokeStyle = "rgba(0,0,0,0.7)";
+    ctx.fillStyle = color.value;
+    ctx.strokeText(text, x, y, maxWidth);
+    ctx.fillText(text, x, y, maxWidth);
+  }
+
+  function drawThumbnail() {
+    ctx.clearRect(0, 0, 1280, 720);
+    ctx.fillStyle = bg.value;
+    ctx.fillRect(0, 0, 1280, 720);
+
+    if (uploadedImage) {
+      const scale = Math.max(
+        1280 / uploadedImage.width,
+        720 / uploadedImage.height
+      );
+
+      const w = uploadedImage.width * scale;
+      const h = uploadedImage.height * scale;
+
+      ctx.drawImage(
+        uploadedImage,
+        (1280 - w) / 2,
+        (720 - h) / 2,
+        w,
+        h
+      );
+
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.fillRect(0, 0, 1280, 720);
+    }
+
+    const align = position.value;
+    const x = align === "left" ? 90 :
+              align === "right" ? 1190 : 640;
+
+    drawText(title.value || "YOUR VIDEO TITLE",
+      x, 320, 1080, Number(size.value));
+
+    drawText(subtitle.value || "SUBSCRIBE FOR MORE",
+      x, 430, 1080, 36);
+  }
+
+  [
+    title, subtitle, color, bg, size, position
+  ].forEach(element => {
+    element.addEventListener("input", drawThumbnail);
+  });
+
+  imageInput.addEventListener("change", () => {
+    const file = imageInput.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Image must be smaller than 10 MB.");
+      imageInput.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const img = new Image();
+
+      img.onload = () => {
+        uploadedImage = img;
+        drawThumbnail();
+      };
+
+      img.src = reader.result;
+    };
+
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById("downloadThumb")
+    .addEventListener("click", () => {
+      const link = document.createElement("a");
+      link.download = "subscribe-count-thumbnail.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    });
+
+  drawThumbnail();
+})();
+</script>
+</body>
 </html>
