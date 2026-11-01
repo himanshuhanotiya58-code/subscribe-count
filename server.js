@@ -42,7 +42,7 @@ async function requireAuth(req, res, next) {
 }
 
 // Protected YouTube channel API
-app.get("/api/channel", requireAuth, async (req, res) => {
+app.get("/api/channel", async (req, res) => {
   try {
     const handle = req.query.handle;
 
